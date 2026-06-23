@@ -14,7 +14,7 @@ import type { AvatarState, VisitorData } from '@/types';
 
 let messageCounter = 0;
 function nextId() {
-  return `msg-${++messageCounter}`;
+  return `msg-${++messageCounter}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
 export default function Home() {
