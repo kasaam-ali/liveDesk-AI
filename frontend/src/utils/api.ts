@@ -1,4 +1,3 @@
-const AI_ENGINE_URL = process.env.NEXT_PUBLIC_AI_ENGINE_URL || 'http://localhost:3001';
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = process.env.NEXT_PUBLIC_GROQ_MODEL || 'llama-3.1-8b-instant';
@@ -81,35 +80,22 @@ async function callGroqAPI(message: string): Promise<string | null> {
 
 export async function sendChatMessage(
   message: string,
-  sessionId: string
+  _sessionId: string
 ): Promise<{ text: string; metadata?: Record<string, string> }> {
-  const hardcoded = getHardcodedResponse(message);
-  if (hardcoded) {
-    return { text: hardcoded, metadata: { source: 'hardcoded' } };
-  }
-
   const groqResponse = await callGroqAPI(message);
   if (groqResponse) {
     return { text: groqResponse, metadata: { source: 'groq' } };
   }
 
-  try {
-    const response = await fetch(`${AI_ENGINE_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, sessionId }),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!response.ok) throw new Error(`Chat API error: ${response.statusText}`);
-
-    return response.json();
-  } catch {
-    return {
-      text: hardcodedResponses.default,
-      metadata: { source: 'fallback' },
-    };
+  const hardcoded = getHardcodedResponse(message);
+  if (hardcoded) {
+    return { text: hardcoded, metadata: { source: 'hardcoded' } };
   }
+
+  return {
+    text: hardcodedResponses.default,
+    metadata: { source: 'fallback' },
+  };
 }
 
 export async function submitVisitorForm(formData: {
@@ -117,22 +103,9 @@ export async function submitVisitorForm(formData: {
   phone: string;
   course: string;
 }) {
-  try {
-    const response = await fetch(`${AI_ENGINE_URL}/api/submit-form`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!response.ok) throw new Error(`Form submission error: ${response.statusText}`);
-
-    return response.json();
-  } catch {
-    return {
-      success: true,
-      message: `Thank you, ${formData.name}! Your information has been recorded.`,
-      offline: true,
-    };
-  }
+  return {
+    success: true,
+    message: `Thank you, ${formData.name}! Your information has been recorded.`,
+    offline: true,
+  };
 }

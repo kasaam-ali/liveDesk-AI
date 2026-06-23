@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import AvatarVideo from '@/components/Avatar/AvatarVideo';
 import ChatBox from '@/components/Chat/ChatBox';
 import type { Message } from '@/components/Chat/ChatBox';
@@ -19,11 +19,7 @@ function nextId() {
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
+  const autoStarted = useRef(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: nextId(),
@@ -65,22 +61,40 @@ export default function Home() {
         .then((response) => {
           setAvatarState('speaking');
           addMessage(response.text, 'ai');
-          speak(response.text, 'en');
-          setTimeout(() => setAvatarState('idle'), 2000);
+          speak(response.text, 'en', () => {
+            setIsProcessing(false);
+            setAvatarState('listening');
+            startListening();
+          });
         })
         .catch(() => {
+          setIsProcessing(false);
           addMessage(
             'I apologize, but I am having trouble connecting. Please try again or contact a human agent.',
             'ai'
           );
-          setAvatarState('idle');
-        })
-        .finally(() => setIsProcessing(false));
+          setAvatarState('listening');
+          startListening();
+        });
     },
     onError: () => {
       addMessage('Voice recognition error. Please try typing your query.', 'ai');
     },
   });
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient || !isSupported || autoStarted.current) return;
+    autoStarted.current = true;
+    const timer = setTimeout(() => {
+      setAvatarState('listening');
+      startListening();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [isClient, isSupported, startListening]);
 
   const handleMicClick = () => {
     if (isListening) {

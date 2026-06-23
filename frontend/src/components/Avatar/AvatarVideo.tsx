@@ -36,10 +36,14 @@ export default function AvatarVideo({ state = 'idle' }: AvatarVideoProps) {
   const s = stateStyles[state];
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
+    const video = videoRef.current;
+    if (!video) return;
+    if (state === 'speaking') {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
     }
-  }, []);
+  }, [state]);
 
   return (
     <div className="flex flex-col items-center justify-center w-full px-4">
@@ -52,7 +56,6 @@ export default function AvatarVideo({ state = 'idle' }: AvatarVideoProps) {
         <video
           ref={videoRef}
           src="/avatar/avatar-video.mp4"
-          autoPlay
           loop
           muted
           playsInline

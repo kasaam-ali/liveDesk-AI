@@ -1,7 +1,8 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const sessions = new Map();
+
+const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 
 function getSystemPrompt() {
   return `You are LiveDesk AI, a friendly and professional virtual receptionist for Saylani Mass IT Training in Karachi, Pakistan.
@@ -36,17 +37,28 @@ export async function POST(request) {
     let sessionHistory = sessions.get(sessionId) || [];
     const systemPrompt = getSystemPrompt();
 
-    const conversationHistory = sessionHistory
-      .slice(-10)
-      .map((msg) => `${msg.role}: ${msg.content}`)
-      .join('\n');
+    const groqResponse = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...sessionHistory.map(msg => ({ role: msg.role.toLowerCase(), content: msg.content })),
+          { role: 'user', content: message },
+        ],
+        temperature: 0.7,
+        max_tokens: 200,
+      }),
+    });
 
-    const fullPrompt = `${systemPrompt}\n\nPrevious conversation:\n${conversationHistory}\n\nUser: ${message}\nAssistant:`;
+    if (!groqResponse.ok) throw new Error(`Groq API error: ${groqResponse.status}`);
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    const aiText = response.text();
+    const data = await groqResponse.json();
+    const aiText = data.choices[0].message.content;
 
     sessionHistory.push(
       { role: 'User', content: message },

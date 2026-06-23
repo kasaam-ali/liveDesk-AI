@@ -28,7 +28,7 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'No message or audio provided' });
     }
 
-    // Process conversation with Gemini
+    // Process conversation with AI
     const aiResponse = await conversationHandler.processMessage(userMessage, sessionId);
 
     // Convert response to speech

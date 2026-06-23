@@ -21,7 +21,7 @@ interface UseSpeechRecognitionReturn {
   isSupported: boolean;
   start: () => void;
   stop: () => void;
-  speak: (text: string, lang?: string) => void;
+  speak: (text: string, lang?: string, onEnd?: () => void) => void;
 }
 
 type SpeechRecognitionInstance = {
@@ -40,6 +40,10 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}):
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const { language = 'en', onResult, onError } = options;
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  onResultRef.current = onResult;
+  onErrorRef.current = onError;
 
   const SpeechRecognitionCtor =
     typeof window !== 'undefined'
@@ -64,11 +68,11 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}):
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
-      onResult?.(transcript);
+      onResultRef.current?.(transcript);
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      onError?.(`Speech recognition error: ${event.error}`);
+      onErrorRef.current?.(`Speech recognition error: ${event.error}`);
       setIsListening(false);
     };
 
@@ -83,12 +87,13 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}):
     setIsListening(false);
   }, []);
 
-  const speak = useCallback((text: string, lang = 'en') => {
+  const speak = useCallback((text: string, lang = 'en', onEnd?: () => void) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
     utterance.rate = 0.9;
+    if (onEnd) utterance.onend = onEnd;
     window.speechSynthesis.speak(utterance);
   }, []);
 
