@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
 interface ChatBubbleProps {
   message: string;
   isAI: boolean;
@@ -5,6 +9,9 @@ interface ChatBubbleProps {
 }
 
 export default function ChatBubble({ message, isAI, timestamp }: ChatBubbleProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   return (
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-3`}>
       <div
@@ -15,8 +22,8 @@ export default function ChatBubble({ message, isAI, timestamp }: ChatBubbleProps
           }`}
       >
         <p>{message}</p>
-        {timestamp && (
-          <span suppressHydrationWarning className={`text-[10px] mt-1 block opacity-60 ${isAI ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+        {mounted && timestamp && (
+          <span className={`text-[10px] mt-1 block opacity-60 ${isAI ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
             {timestamp}
           </span>
         )}
