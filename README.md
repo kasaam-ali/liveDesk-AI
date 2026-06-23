@@ -41,7 +41,7 @@ Visitor ──► Frontend (Next.js 16)
         ┌───────┼───────────┐
         ▼       ▼           ▼
    Hardcoded   Groq API   AI Engine
-   Keywords    (llama3)   (Gemini+Groq)
+   Keywords    (Groq)     (Gemini+Groq)
    (instant)   (fast)     (server-side)
 ```
 
@@ -63,7 +63,7 @@ Visitor ──► Frontend (Next.js 16)
 | Layer | Technology |
 |-------|------------|
 | Frontend | Next.js 16, TypeScript, Tailwind CSS v4 |
-| AI Providers | Google Gemini, Groq (llama3-8b-8192) |
+| AI Providers | Google Gemini, Groq (llama-3.1-8b-instant) |
 | Voice | Web Speech API (browser-native) |
 | Messaging | Twilio WhatsApp API |
 | Avatar | Looped video with CSS state overlays |

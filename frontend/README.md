@@ -121,7 +121,7 @@ User Input
     └── No match → Go to tier 2
                      │
                      ▼
-2️⃣ Groq API (llama3-8b-8192, requires API key)
+2️⃣ Groq API (llama-3.1-8b-instant, requires API key)
                      │
                      ├── Success → Return AI response
                      │
@@ -142,7 +142,7 @@ User Input
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `NEXT_PUBLIC_GROQ_API_KEY` | No | — | Groq API key for fast AI responses |
-| `NEXT_PUBLIC_GROQ_MODEL` | No | `llama3-8b-8192` | Groq model to use |
+| `NEXT_PUBLIC_GROQ_MODEL` | No | `llama-3.1-8b-instant` | Groq model to use |
 | `NEXT_PUBLIC_AI_ENGINE_URL` | No | `http://localhost:3001` | URL of the AI engine server |
 
 ---

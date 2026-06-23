@@ -1,7 +1,7 @@
 const AI_ENGINE_URL = process.env.NEXT_PUBLIC_AI_ENGINE_URL || 'http://localhost:3001';
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = process.env.NEXT_PUBLIC_GROQ_MODEL || 'llama3-8b-8192';
+const GROQ_MODEL = process.env.NEXT_PUBLIC_GROQ_MODEL || 'llama-3.1-8b-instant';
 
 const hardcodedResponses: Record<string, string> = {
   assalam: 'Wa Alaikum Assalam! I am LiveDesk AI, your virtual receptionist. How can I help you today?',

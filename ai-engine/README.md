@@ -31,7 +31,7 @@ Request → Express Server
        ┌──────┴──────┐
        ▼              ▼
    Gemini API    Groq API (fallback)
-   (primary)     (llama3-8b-8192)
+    (primary)     (llama-3.1-8b-instant)
        │              │
        └──────┬──────┘
               ▼
@@ -43,7 +43,7 @@ Request → Express Server
 | Provider | Role | Model | When Used |
 |----------|------|-------|-----------|
 | **Gemini** | Primary | `gemini-pro` | Always tried first |
-| **Groq** | Fallback | `llama3-8b-8192` | Only if Gemini fails |
+| **Groq** | Fallback | `llama-3.1-8b-instant` | Only if Gemini fails |
 
 The engine automatically falls back to Groq if the Gemini API call fails (network error, quota exceeded, etc.).
 
@@ -145,5 +145,5 @@ npm start
 |----------|----------|---------|-------------|
 | `GEMINI_API_KEY` | ✅ | — | Google Gemini API key |
 | `GROQ_API_KEY` | ❌ | — | Groq API key (fallback) |
-| `GROQ_MODEL` | ❌ | `llama3-8b-8192` | Groq model name |
+| `GROQ_MODEL` | ❌ | `llama-3.1-8b-instant` | Groq model name |
 | `PORT` | ❌ | 3001 | Server port |
