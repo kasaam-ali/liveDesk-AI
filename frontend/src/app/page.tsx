@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
-import AvatarDisplay from '@/components/Avatar/AvatarDisplay';
+import { useState, useCallback, useEffect } from 'react';
+import AvatarVideo from '@/components/Avatar/AvatarVideo';
 import ChatBox from '@/components/Chat/ChatBox';
 import type { Message } from '@/components/Chat/ChatBox';
 import MicButton from '@/components/MicButton';
@@ -14,10 +14,16 @@ import type { AvatarState, VisitorData } from '@/types';
 
 let messageCounter = 0;
 function nextId() {
-  return `msg-${++messageCounter}-${Date.now()}`;
+  return `msg-${++messageCounter}`;
 }
 
 export default function Home() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: nextId(),
@@ -30,8 +36,6 @@ export default function Home() {
   const [sessionId] = useState(() => `session-${Date.now()}`);
   const [isProcessing, setIsProcessing] = useState(false);
   const [handoffRequested, setHandoffRequested] = useState(false);
-  const [autoFilledField, setAutoFilledField] = useState<string | undefined>();
-  const formRef = useRef<{ updateField: (field: string, value: string) => void } | null>(null);
 
   const addMessage = useCallback((text: string, sender: 'user' | 'ai') => {
     setMessages((prev) => [
@@ -45,32 +49,6 @@ export default function Home() {
     ]);
   }, []);
 
-  const handleSpeechResult = useCallback(
-    async (transcript: string) => {
-      if (isProcessing) return;
-      addMessage(transcript, 'user');
-      setIsProcessing(true);
-      setAvatarState('thinking');
-
-      try {
-        const response = await sendChatMessage(transcript, sessionId);
-        setAvatarState('speaking');
-        addMessage(response.text, 'ai');
-
-        setTimeout(() => setAvatarState('idle'), 2000);
-      } catch {
-        addMessage(
-          'I apologize, but I am having trouble connecting to my AI engine. Please try again or contact a human agent.',
-          'ai'
-        );
-        setAvatarState('idle');
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [isProcessing, sessionId, addMessage]
-  );
-
   const {
     isListening,
     isSupported,
@@ -78,10 +56,29 @@ export default function Home() {
     stop: stopListening,
     speak,
   } = useSpeechRecognition({
-    onResult: handleSpeechResult,
-    onError: (error) => {
-      console.error(error);
-      addMessage('There was an issue with voice recognition. Please try typing your query.', 'ai');
+    onResult: (transcript) => {
+      addMessage(transcript, 'user');
+      setIsProcessing(true);
+      setAvatarState('thinking');
+
+      sendChatMessage(transcript, sessionId)
+        .then((response) => {
+          setAvatarState('speaking');
+          addMessage(response.text, 'ai');
+          speak(response.text, 'en');
+          setTimeout(() => setAvatarState('idle'), 2000);
+        })
+        .catch(() => {
+          addMessage(
+            'I apologize, but I am having trouble connecting. Please try again or contact a human agent.',
+            'ai'
+          );
+          setAvatarState('idle');
+        })
+        .finally(() => setIsProcessing(false));
+    },
+    onError: () => {
+      addMessage('Voice recognition error. Please try typing your query.', 'ai');
     },
   });
 
@@ -102,57 +99,45 @@ export default function Home() {
         `Thank you, ${data.name}! Your information has been submitted. We will contact you regarding the ${data.course} course.`,
         'ai'
       );
-      speak(
-        `Thank you ${data.name}! Your information has been submitted successfully.`
-      );
+      speak(`Thank you ${data.name}! Your information has been submitted successfully.`);
     } catch {
-      addMessage(
-        'There was an error submitting your information. Please try again.',
-        'ai'
-      );
+      addMessage('There was an error submitting your information. Please try again.', 'ai');
     }
   };
 
   const handleHandoff = () => {
     setHandoffRequested(true);
-    addMessage(
-      'Connecting you to a human agent. Please wait a moment...',
-      'ai'
-    );
+    addMessage('Connecting you to a human agent. Please wait a moment...', 'ai');
     setTimeout(() => {
-      addMessage(
-        'Hello! I am a human agent. How can I assist you today?',
-        'ai'
-      );
+      addMessage('Hello! I am a human agent. How can I assist you today?', 'ai');
     }, 3000);
   };
 
+  if (!isClient) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-gray-950" />;
+  }
+
   return (
-    <div className="flex flex-col items-center w-full max-w-lg mx-auto px-4 pb-8 min-h-screen">
+    <div className="flex flex-col items-center w-full max-w-2xl mx-auto px-4 pb-8 min-h-screen">
       <Header />
 
       <div className="w-full space-y-6">
-        <AvatarDisplay state={avatarState} />
+        <AvatarVideo state={avatarState} />
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 h-80 flex flex-col">
           <ChatBox messages={messages} />
         </div>
 
         <div className="flex justify-center">
-          {!isSupported ? (
-            <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
-              Speech recognition is not available in this browser. Please use Chrome or Edge.
-            </p>
-          ) : (
-            <MicButton
-              isListening={isListening}
-              isDisabled={isProcessing}
-              onClick={handleMicClick}
-            />
-          )}
+          <MicButton
+            isListening={isListening}
+            isDisabled={isProcessing}
+            isSupported={isSupported}
+            onClick={handleMicClick}
+          />
         </div>
 
-        <VisitorForm onFormSubmit={handleFormSubmit} autoFilledField={autoFilledField} />
+        <VisitorForm onFormSubmit={handleFormSubmit} />
 
         {!handoffRequested && (
           <HandoffButton onHandoff={handleHandoff} disabled={isProcessing} />

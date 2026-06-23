@@ -3,10 +3,24 @@
 interface MicButtonProps {
   isListening: boolean;
   isDisabled?: boolean;
+  isSupported: boolean;
   onClick: () => void;
 }
 
-export default function MicButton({ isListening, isDisabled = false, onClick }: MicButtonProps) {
+export default function MicButton({
+  isListening,
+  isDisabled = false,
+  isSupported,
+  onClick,
+}: MicButtonProps) {
+  if (!isSupported) {
+    return (
+      <p className="text-sm text-amber-600 dark:text-amber-400 text-center max-w-xs">
+        Speech recognition is not available in this browser. Please use Chrome or Edge.
+      </p>
+    );
+  }
+
   return (
     <button
       onClick={onClick}

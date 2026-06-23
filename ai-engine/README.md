@@ -1,74 +1,149 @@
 # LiveDesk AI — AI Engine
 
-The core AI engine that powers LiveDesk. Built with Express and Google Gemini API, it handles conversation processing, speech-to-text, text-to-speech, and session management.
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)](https://nodejs.org)
+[![Express](https://img.shields.io/badge/Express-4.18-000000?logo=express)](https://expressjs.com)
+[![Gemini](https://img.shields.io/badge/Gemini-API-4285F4?logo=google)](https://ai.google.dev)
+[![Groq](https://img.shields.io/badge/Groq-API-38B2AC)](https://console.groq.com)
 
-## Capabilities
+The core AI engine that powers LiveDesk conversations. Built with Express, it provides chat and voice endpoints with automatic failover between AI providers.
 
-- **Conversation Processing**: Integrates with Google Gemini for intelligent, context-aware responses
-- **Speech-to-Text**: Processes audio input using Gemini's multimodal capabilities
-- **Text-to-Speech**: Returns text for browser-based speech synthesis
-- **Session Management**: Maintains conversation history per visitor session
-- **Context Awareness**: Uses a knowledge base of Saylani Mass IT courses, FAQs, and contact information
+---
 
-## Quick Start
+## Table of Contents
 
-### Prerequisites
+- [Architecture](#architecture)
+- [AI Providers](#ai-providers)
+- [Endpoints](#endpoints)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
 
-- Node.js 18+
-- Google Gemini API key ([get one free](https://aistudio.google.com/app/apikey))
+---
 
-### Installation
+## Architecture
 
-```bash
-npm install
-cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
-npm run dev
+```
+Request → Express Server
+              │
+              ▼
+      Conversation Handler
+              │
+       ┌──────┴──────┐
+       ▼              ▼
+   Gemini API    Groq API (fallback)
+   (primary)     (llama3-8b-8192)
+       │              │
+       └──────┬──────┘
+              ▼
+      Response + Session Update
 ```
 
-The server starts on `http://localhost:3001`.
+## AI Providers
 
-## API Endpoints
+| Provider | Role | Model | When Used |
+|----------|------|-------|-----------|
+| **Gemini** | Primary | `gemini-pro` | Always tried first |
+| **Groq** | Fallback | `llama3-8b-8192` | Only if Gemini fails |
 
-| Endpoint       | Method | Description                              |
-|----------------|--------|------------------------------------------|
-| `/health`      | GET    | Health check                             |
-| `/api/chat`    | POST   | Send a text message, receive AI response |
-| `/api/voice`   | POST   | Send audio data, receive audio response  |
+The engine automatically falls back to Groq if the Gemini API call fails (network error, quota exceeded, etc.).
+
+---
+
+## Endpoints
+
+### `GET /health`
+
+Health check.
+
+**Response:**
+```json
+{ "status": "OK", "service": "LiveDesk AI Engine" }
+```
+
+### `POST /api/chat`
+
+Process a text message through the AI providers.
+
+**Request:**
+```json
+{
+  "message": "What courses do you offer?",
+  "sessionId": "session-1712345678"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "text": "We offer Web Development, AI, Cloud Computing, and Graphic Design.",
+  "metadata": {
+    "sessionId": "session-1712345678",
+    "timestamp": "2026-06-23T10:30:00.000Z"
+  }
+}
+```
+
+### `POST /api/voice`
+
+Process audio data (speech-to-text → AI → text-to-speech).
+
+**Request:**
+```json
+{
+  "audioData": "<base64-audio>",
+  "sessionId": "session-1712345678"
+}
+```
+
+---
 
 ## Project Structure
 
 ```
 ai-engine/
-├── index.js                # Express server — routes and middleware
+├── index.js                    # Express server — routes and middleware
+├── test.js                     # Module tests
 ├── conversation/
-│   ├── handler.js          # Gemini API integration and session management
-│   └── context.js          # Knowledge base (courses, FAQs, contact info)
+│   ├── handler.js              # Gemini + Groq integration, session management
+│   └── context.js              # Knowledge base (courses, FAQs, contact info)
 ├── prompts/
-│   └── manager.js          # System prompt builder for Gemini
+│   └── manager.js              # System prompt builder
 └── voice/
-    └── processor.js        # Speech-to-text and text-to-speech utilities
+    └── processor.js            # Speech-to-text and text-to-speech utilities
 ```
+
+---
+
+## Quick Start
+
+```bash
+npm install
+cp .env.example .env
+# Edit .env — add GEMINI_API_KEY (and optionally GROQ_API_KEY)
+npm run dev
+# Server starts on http://localhost:3001
+```
+
+### Test
+
+```bash
+npm test
+```
+
+### Production
+
+```bash
+npm start
+```
+
+---
 
 ## Environment Variables
 
-| Variable        | Required | Description            |
-|-----------------|----------|------------------------|
-| `GEMINI_API_KEY` | Yes      | Google Gemini API key |
-| `PORT`          | No       | Server port (default: 3001) |
-
-## API Usage
-
-### Chat
-
-```bash
-curl -X POST http://localhost:3001/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What courses do you offer?", "sessionId": "test-123"}'
-```
-
-### Health Check
-
-```bash
-curl http://localhost:3001/health
-```
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GEMINI_API_KEY` | ✅ | — | Google Gemini API key |
+| `GROQ_API_KEY` | ❌ | — | Groq API key (fallback) |
+| `GROQ_MODEL` | ❌ | `llama3-8b-8192` | Groq model name |
+| `PORT` | ❌ | 3001 | Server port |
