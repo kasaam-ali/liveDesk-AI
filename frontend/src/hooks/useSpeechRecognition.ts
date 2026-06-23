@@ -2,6 +2,14 @@
 
 import { useState, useCallback, useRef } from 'react';
 
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
 interface UseSpeechRecognitionOptions {
   language?: string;
   onResult?: (transcript: string) => void;
@@ -16,34 +24,50 @@ interface UseSpeechRecognitionReturn {
   speak: (text: string, lang?: string) => void;
 }
 
+type SpeechRecognitionInstance = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+};
+
 export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}): UseSpeechRecognitionReturn {
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const { language = 'en', onResult, onError } = options;
 
-  const isSupported = typeof window !== 'undefined' &&
-    !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const SpeechRecognitionCtor =
+    typeof window !== 'undefined'
+      ? (window as unknown as Record<string, new () => SpeechRecognitionInstance>).SpeechRecognition ||
+        (window as unknown as Record<string, new () => SpeechRecognitionInstance>).webkitSpeechRecognition
+      : undefined;
+
+  const isSupported = !!SpeechRecognitionCtor;
 
   const start = useCallback(() => {
-    if (!isSupported) {
+    if (!SpeechRecognitionCtor) {
       onError?.('Speech recognition is not supported in this browser.');
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    const recognition = new SpeechRecognitionCtor();
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = language;
 
     recognition.onstart = () => setIsListening(true);
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       onResult?.(transcript);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       onError?.(`Speech recognition error: ${event.error}`);
       setIsListening(false);
     };
@@ -52,7 +76,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}):
 
     recognitionRef.current = recognition;
     recognition.start();
-  }, [isSupported, language, onResult, onError]);
+  }, [SpeechRecognitionCtor, language, onResult, onError]);
 
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
