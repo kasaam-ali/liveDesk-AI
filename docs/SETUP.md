@@ -1,74 +1,78 @@
-# ⚙️ LiveDesk AI — Setup Guide
+# LiveDesk AI — Setup Guide
 
-## Pehli Baar Setup Karna
+## First-Time Setup
 
-### 1. Repo Clone Karo
+### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/YOUR_USERNAME/livedesk-ai.git
 cd livedesk-ai
 ```
 
-### 2. Environment Variables Set Karo
+### 2. Configure Environment Variables
+
 ```bash
 cp .env.example .env.local
-# Ab .env.local file kholo aur apni keys daalo
+# Open .env.local and add your API keys
 ```
 
-### 3. Frontend Install Karo
+### 3. Start the AI Engine
+
+```bash
+cd ai-engine
+cp .env.example .env
+# Add your GEMINI_API_KEY to .env
+npm install
+npm run dev
+```
+
+The AI engine will start on `http://localhost:3001`.
+
+### 4. Start the Frontend
+
+Open a new terminal:
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 4. Browser mein kholo
-```
-http://localhost:3000
-```
+Open [http://localhost:3000](http://localhost:3000) in Chrome or Edge.
 
----
+## Obtaining API Keys
 
-## API Keys Kahan Se Milenge
+| Key               | Source                                          | Cost  |
+|-------------------|-------------------------------------------------|-------|
+| GEMINI_API_KEY    | [Google AI Studio](https://aistudio.google.com) | Free  |
+| TWILIO keys       | [Twilio](https://twilio.com)                    | Free (sandbox) |
 
-| Key | Website | Cost |
-|-----|---------|------|
-| GEMINI_API_KEY | aistudio.google.com | FREE |
-| TWILIO keys | twilio.com | FREE (sandbox) |
-
----
-
-## Git Workflow — Roz Ka Kaam
+## Daily Workflow
 
 ```bash
-# Pehle latest code lo
+# Pull latest changes
 git pull origin main
 
-# Apni branch banao
-git checkout -b feature/tumhara-kaam
+# Create a feature branch
+git checkout -b feature/your-task
 
-# Kaam karo...
+# Make your changes...
 
-# Changes add karo
+# Stage and commit
 git add .
+git commit -m "feat: add new feature description"
 
-# Commit karo — clear message likho
-git commit -m "feat: Gemini API se connection add kiya"
+# Push to GitHub
+git push origin feature/your-task
 
-# Push karo
-git push origin feature/tumhara-kaam
-
-# GitHub pe jaao → Pull Request banao
+# Create a Pull Request on GitHub
 ```
 
----
+## Troubleshooting
 
-## Common Errors
-
-### "API key not found"
-→ `.env.local` file check karo — sahi jagah hai?
-
-### "Module not found"
-→ `npm install` dobara chalaao
-
-### "Port already in use"
-→ `npm run dev -- -p 3001` use karo
+| Problem                    | Solution                                    |
+|----------------------------|---------------------------------------------|
+| "API key not found"        | Check that .env file exists and keys are set correctly |
+| "Module not found"         | Run `npm install` again                     |
+| "Port already in use"      | Use `npm run dev -- -p 3002`                |
+| Speech recognition not working | Use Chrome or Edge browser              |

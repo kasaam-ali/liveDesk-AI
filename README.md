@@ -1,163 +1,109 @@
-# 🤖 LiveDesk AI — Visual AI Receptionist
+# LiveDesk AI — Visual AI Receptionist
 
-> Ek AI receptionist jo kabhi thakta nahi, kabhi rude nahi hota, aur 24/7 kaam karta hai.
+An AI-powered virtual receptionist for schools, clinics, and training centers. LiveDesk AI conducts voice conversations in English and Urdu, fills visitor forms, books appointments, and sends WhatsApp confirmations — all through an animated interface.
 
----
+## Architecture
 
-## 📌 Project Overview
+```
+User ──► Frontend (Next.js) ──► AI Engine (Express + Gemini) ──► Integrations
+          │                                                          │
+          │  Web Speech API                                         ├── WhatsApp (Twilio)
+          │  Real Avatar Images                                     ├── Appointment Booking
+          │  Chat Interface                                         └── Analytics Logging
+          │
+          └── Backend API Routes (Chat, Form Submission)
+```
 
-LiveDesk AI ek animated AI avatar hai jo schools aur clinics ke front desk pe deploy hota hai.
-Yeh Urdu aur English mein voice conversation karta hai, forms bharta hai, appointments book karta hai,
-aur WhatsApp pe confirmation bhejta hai.
+## Tech Stack
 
-**Stack:** Next.js · Gemini API · Web Speech API · Twilio WhatsApp · Tailwind CSS
+| Layer         | Technology                               |
+|---------------|------------------------------------------|
+| Frontend      | Next.js 16, TypeScript, Tailwind CSS v4  |
+| AI Engine     | Node.js, Express, Google Gemini API      |
+| Voice         | Web Speech API (browser-native)          |
+| Messaging     | Twilio WhatsApp API                      |
+| Avatar        | Real portrait images with CSS animations |
 
----
-
-## 👥 Team Structure & Responsibilities
-
-| Member | Role | Folder | Kaam |
-|--------|------|--------|------|
-| AI Dev #1 | AI Engine Lead | `/ai-engine/` | Gemini API, Conversation Flow, Prompt Engineering |
-| AI Dev #2 | Voice & Speech | `/ai-engine/voice/` | Web Speech API, TTS, Accent Handling |
-| Web Dev #1 | Frontend Lead | `/frontend/` | Next.js UI, Avatar Component, Chat Interface |
-| Web Dev #2 | Integrations | `/integrations/` | WhatsApp, Appointment Booking |
-| Web Dev #3 | Backend & Forms | `/backend/` | API Routes, Form Filling, Data Models |
-
----
-
-## 🗂️ Folder Structure
+## Project Structure
 
 ```
 livedesk-ai/
-│
-├── frontend/                  # Web Dev #1 ka kaam
-│   ├── public/                # Static assets (avatar images, icons)
-│   └── src/
-│       ├── components/
-│       │   ├── Avatar/        # Animated avatar component
-│       │   ├── Chat/          # Chat bubble UI
-│       │   └── Forms/         # Visitor form components
-│       ├── hooks/             # Custom React hooks
-│       ├── styles/            # Global CSS / Tailwind config
-│       └── utils/             # Helper functions
-│
-├── ai-engine/                 # AI Dev #1 ka kaam
-│   ├── prompts/               # Gemini system prompts (school, clinic, etc.)
-│   ├── conversation/          # Conversation state management
-│   └── voice/                 # AI Dev #2 — Web Speech API, TTS
-│
-├── integrations/              # Web Dev #2 ka kaam
-│   ├── whatsapp/              # Twilio WhatsApp integration
-│   ├── appointments/          # Appointment booking logic
-│   └── analytics/             # Usage tracking, conversation logs
-│
-├── backend/                   # Web Dev #3 ka kaam
-│   ├── api/                   # Next.js API routes
-│   ├── middleware/            # Auth, rate limiting
-│   └── models/                # Data schemas (visitor, appointment, etc.)
-│
-├── docs/                      # Documentation — sab likhte jaao
-│   ├── SETUP.md
-│   ├── API_DOCS.md
-│   └── DEPLOYMENT.md
-│
-└── .github/
-    ├── ISSUE_TEMPLATE/        # Bug report & feature request templates
-    └── PULL_REQUEST_TEMPLATE/ # PR checklist
+├── frontend/          # Next.js web application
+│   ├── src/
+│   │   ├── app/       # Pages and layout
+│   │   ├── components/# UI components (Avatar, Chat, Forms)
+│   │   ├── hooks/     # Custom React hooks
+│   │   └── utils/     # API client utilities
+│   └── public/        # Static assets (avatar images)
+├── ai-engine/         # Express server with Gemini AI
+│   ├── conversation/  # Conversation state management
+│   ├── prompts/       # System prompt templates
+│   └── voice/         # Speech processing utilities
+├── backend/           # API route definitions
+│   ├── api/           # Chat and form endpoints
+│   ├── middleware/    # Rate limiting, auth
+│   └── models/       # Data schemas
+├── integrations/      # Third-party service connectors
+│   ├── whatsapp/      # Twilio WhatsApp integration
+│   ├── appointments/  # Appointment booking logic
+│   └── analytics/     # Conversation logging
+└── docs/             # Documentation
 ```
 
----
+## Quick Start
 
-## 🚀 Week-by-Week MVP Plan
-
-### ✅ Week 1 — "Baat Karo AI Se" (AI Devs Lead)
-- [ ] Gemini API connect karo
-- [ ] Web Speech API se mic input lo
-- [ ] AI ka jawab awaaz mein sunao
-- [ ] Basic Next.js page pe deploy karo
-
-### ✅ Week 2 — "Script Daalo" (AI Dev #1 Lead)
-- [ ] School/clinic ke liye system prompt likho
-- [ ] Conversation flow banao (sawaal → jawab → follow-up)
-- [ ] Avatar component frontend pe integrate karo
-
-### ✅ Week 3 — "WhatsApp Bhejo" (Web Dev #2 Lead)
-- [ ] Twilio free tier setup karo
-- [ ] Visitor number lo, confirmation bhejo
-- [ ] Appointment booking form complete karo
-
-### ✅ Week 4 — "Real Jagah Pe Lagao" (Sab Milke)
-- [ ] Ek real school ya clinic pe tablet deploy karo
-- [ ] Real visitors se test karo
-- [ ] Feedback note karo, bugs fix karo
-
----
-
-## ⚙️ Quick Setup
+### 1. Set Up the AI Engine
 
 ```bash
-# Repo clone karo
-git clone https://github.com/YOUR_USERNAME/livedesk-ai.git
-cd livedesk-ai
-
-# Frontend setup
-cd frontend
+cd ai-engine
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY
 npm install
 npm run dev
+# AI engine starts on http://localhost:3001
+```
 
-# .env file banao (sample neeche hai)
+### 2. Set Up the Frontend
+
+```bash
+cd frontend
 cp .env.example .env.local
+npm install
+npm run dev
+# Open http://localhost:3000 in Chrome or Edge
 ```
 
----
+### 3. Speak with the AI
 
-## 🔑 Environment Variables
+Click the microphone button and ask questions like:
+- "What courses do you offer?"
+- "How much is the fee?"
+- "I want to enroll in Web Development"
+- "Admission kaise lein?"
 
-```env
-# Gemini API
-GEMINI_API_KEY=your_key_here
+## Environment Variables
 
-# Twilio WhatsApp
-TWILIO_ACCOUNT_SID=your_sid
-TWILIO_AUTH_TOKEN=your_token
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
+Copy `.env.example` to `.env.local` (frontend) or `.env` (ai-engine) and fill in your keys:
 
-# App Config
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+| Variable                    | Required | Description                     |
+|-----------------------------|----------|---------------------------------|
+| `GEMINI_API_KEY`            | Yes      | Google Gemini AI API key        |
+| `TWILIO_ACCOUNT_SID`        | No       | Twilio account SID              |
+| `TWILIO_AUTH_TOKEN`         | No       | Twilio auth token               |
+| `TWILIO_WHATSAPP_NUMBER`    | No       | Twilio WhatsApp number          |
+| `NEXT_PUBLIC_AI_ENGINE_URL` | For prod | URL of the deployed AI engine   |
+| `NEXT_PUBLIC_APP_URL`       | For prod | Public URL of the frontend      |
 
----
+## Features
 
-## 📋 Git Rules — Sab Ko Follow Karna Hai
+- **Real Avatar**: Professional portrait images that transition through idle, speaking, listening, and thinking states with smooth animations.
+- **Voice Conversation**: Browser-native speech recognition and synthesis for hands-free interaction.
+- **Bilingual Support**: Fluent in both English and Urdu (Roman Urdu).
+- **Visitor Form**: Automatically captures visitor information during conversation.
+- **WhatsApp Confirmation**: Sends appointment confirmations via Twilio WhatsApp.
+- **Human Handoff**: Seamless transfer to a human agent when needed.
+- **Dark Mode**: Full dark mode support with system preference detection.
 
-```
-✅ Apne folder ke bahar kaam mat karo bina puchhe
-✅ Har commit mein clear message likho (Urdu ya English)
-✅ Direct main branch pe push mat karo
-✅ Apna kaam karte waqt apni branch banao
-✅ Jab kaam complete ho, Pull Request banao
-```
+## Browser Support
 
-### Branch Naming Convention
-```
-feature/ai-gemini-connect     ← AI Dev #1
-feature/voice-speech-api      ← AI Dev #2
-feature/avatar-component      ← Web Dev #1
-feature/whatsapp-integration  ← Web Dev #2
-feature/backend-api-routes    ← Web Dev #3
-```
-
----
-
-## 🐛 Issue Report Karna
-
-Koi bug mile ya koi cheez kaam na kare?
-GitHub Issues mein likho — template already set hai.
-
----
-
-## 📞 Contact / Project Lead
-
-LiveDesk AI Team
-Built with ❤️ in Pakistan
+For the best experience, use **Google Chrome** or **Microsoft Edge**. These browsers have full Web Speech API support.

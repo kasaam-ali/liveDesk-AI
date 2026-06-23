@@ -1,136 +1,55 @@
-# 📱 Integrations — Web Dev #2 Ka Folder
+# LiveDesk AI — Integrations
 
-## Tumhara Kaam:
-1. WhatsApp confirmation messages
-2. Appointment booking logic
-3. Analytics/conversation logging
+Third-party service integrations for WhatsApp messaging, appointment booking, and analytics logging.
 
----
+## Services
 
-## WhatsApp Setup — Twilio Free Tier ($0)
+### WhatsApp (Twilio)
 
-### Step 1: Account Banao
-1. twilio.com pe jaao — free account banao
-2. WhatsApp Sandbox activate karo
-3. Yeh numbers note karo:
-   - Account SID
-   - Auth Token
-   - Sandbox Number: `whatsapp:+14155238886`
+Sends appointment confirmation messages to visitors via WhatsApp.
 
-### Step 2: Code (`/whatsapp/sendConfirmation.js`)
+**Setup:**
+1. Create a free account at [twilio.com](https://twilio.com)
+2. Activate the WhatsApp Sandbox
+3. Copy your Account SID and Auth Token
+4. Set environment variables:
+   - `TWILIO_ACCOUNT_SID`
+   - `TWILIO_AUTH_TOKEN`
+   - `TWILIO_WHATSAPP_NUMBER`
 
+**Usage:**
 ```javascript
-const twilio = require('twilio');
+import { sendWhatsAppConfirmation } from './whatsapp/sendConfirmation.js';
 
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
-async function sendWhatsAppConfirmation({ 
-  visitorName, 
-  visitorPhone, 
-  appointmentTime,
-  businessName 
-}) {
-  const message = await client.messages.create({
-    from: 'whatsapp:+14155238886',  // Twilio sandbox
-    to: `whatsapp:+92${visitorPhone}`,  // Pakistan number
-    body: `
-🏫 *${businessName}*
-
-Assalam o Alaikum *${visitorName}* ji! 
-
-Aapki visit ka shukriya. ✅
-
-📅 Appointment: *${appointmentTime}*
-
-Koi sawal ho toh is number pe WhatsApp karein.
-Shukriya! 🙏
-    `
-  });
-
-  return message.sid;
-}
-
-module.exports = { sendWhatsAppConfirmation };
+await sendWhatsAppConfirmation({
+  visitorName: 'Ahmed Khan',
+  visitorPhone: '03001234567',
+  appointmentTime: '2026-01-20 - 10:00 AM',
+  businessName: 'Saylani Mass IT',
+});
 ```
 
----
+### Appointment Booking
 
-## Appointment Booking (`/appointments/bookAppointment.js`)
+In-memory appointment management system. Replace with a database in production.
 
-```javascript
-// Simple appointment object — database baad mein lagenge
-// Pehle sirf memory mein store karo
+**Functions:**
+- `bookAppointment(data)` — Create a new appointment
+- `getAllAppointments()` — List all appointments
+- `getAppointmentsByDate(date)` — Filter appointments by date
 
-const appointments = [];
+### Analytics
 
-function bookAppointment({ name, phone, date, time, purpose }) {
-  const appointment = {
-    id: Date.now(),
-    name,
-    phone,
-    date,
-    time,
-    purpose,
-    createdAt: new Date().toISOString(),
-    status: 'confirmed'
-  };
-  
-  appointments.push(appointment);
-  console.log('✅ Appointment booked:', appointment);
-  return appointment;
-}
+Conversation logging and statistics tracking.
 
-function getAllAppointments() {
-  return appointments;
-}
+**Functions:**
+- `logConversation(data)` — Record a conversation
+- `getStats()` — Get aggregate statistics (total conversations, appointments booked, average duration)
 
-module.exports = { bookAppointment, getAllAppointments };
-```
+## Environment Variables
 
----
-
-## Analytics (`/analytics/logConversation.js`)
-
-```javascript
-// Har conversation log karo — yeh data baad mein bahut kaam aayega
-
-const conversationLogs = [];
-
-function logConversation({ visitorPhone, messages, duration, outcome }) {
-  const log = {
-    id: Date.now(),
-    timestamp: new Date().toISOString(),
-    visitorPhone,
-    messageCount: messages.length,
-    duration,  // seconds mein
-    outcome,   // 'appointment_booked' | 'info_given' | 'escalated_to_human'
-    messages
-  };
-  
-  conversationLogs.push(log);
-  return log;
-}
-
-function getStats() {
-  return {
-    totalConversations: conversationLogs.length,
-    appointmentsBooked: conversationLogs.filter(l => l.outcome === 'appointment_booked').length,
-    avgDuration: conversationLogs.reduce((acc, l) => acc + l.duration, 0) / conversationLogs.length
-  };
-}
-
-module.exports = { logConversation, getStats };
-```
-
----
-
-## ✅ Week 3 Checklist — Web Dev #2
-
-- [ ] Twilio account bana liya
-- [ ] Sandbox WhatsApp pe test message gaya
-- [ ] `sendWhatsAppConfirmation()` kaam kar rahi hai
-- [ ] Appointment booking function ready
-- [ ] Conversation logging shuru ho gayi
+| Variable               | Description                |
+|------------------------|----------------------------|
+| `TWILIO_ACCOUNT_SID`   | Twilio account SID         |
+| `TWILIO_AUTH_TOKEN`    | Twilio auth token          |
+| `TWILIO_WHATSAPP_NUMBER` | Twilio WhatsApp number   |
