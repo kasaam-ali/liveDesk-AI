@@ -25,7 +25,6 @@ export default function Home() {
       id: nextId(),
       text: 'Assalam-o-Alaikum! I am LiveDesk AI, your virtual receptionist. How can I help you today?',
       sender: 'ai',
-      timestamp: new Date().toLocaleTimeString(),
     },
   ]);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
