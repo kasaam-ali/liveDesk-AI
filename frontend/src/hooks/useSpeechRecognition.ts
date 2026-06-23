@@ -13,12 +13,14 @@ interface SpeechRecognitionErrorEvent extends Event {
 interface UseSpeechRecognitionOptions {
   language?: string;
   onResult?: (transcript: string) => void;
+  onInterim?: (transcript: string) => void;
   onError?: (error: string) => void;
 }
 
 interface UseSpeechRecognitionReturn {
   isListening: boolean;
   isSupported: boolean;
+  interimText: string;
   start: () => void;
   stop: () => void;
   speak: (text: string, lang?: string, onEnd?: () => void) => void;
@@ -38,11 +40,14 @@ type SpeechRecognitionInstance = {
 
 export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}): UseSpeechRecognitionReturn {
   const [isListening, setIsListening] = useState(false);
+  const [interimText, setInterimText] = useState('');
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  const { language = 'en', onResult, onError } = options;
+  const { language = 'en', onResult, onInterim, onError } = options;
   const onResultRef = useRef(onResult);
+  const onInterimRef = useRef(onInterim);
   const onErrorRef = useRef(onError);
   onResultRef.current = onResult;
+  onInterimRef.current = onInterim;
   onErrorRef.current = onError;
 
   const SpeechRecognitionCtor =
@@ -60,15 +65,30 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}):
     }
 
     const recognition = new SpeechRecognitionCtor();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = language;
 
-    recognition.onstart = () => setIsListening(true);
+    recognition.onstart = () => { setIsListening(true); setInterimText(''); };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
-      onResultRef.current?.(transcript);
+      let interim = '';
+      let final = '';
+      for (let i = event.results.length - 1; i >= 0; i--) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          final = result[0].transcript;
+          break;
+        }
+        interim = result[0].transcript + interim;
+      }
+      if (final) {
+        setInterimText('');
+        onResultRef.current?.(final);
+      } else {
+        setInterimText(interim);
+        onInterimRef.current?.(interim);
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -97,5 +117,5 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}):
     window.speechSynthesis.speak(utterance);
   }, []);
 
-  return { isListening, isSupported, start, stop, speak };
+  return { isListening, isSupported, interimText, start, stop, speak };
 }

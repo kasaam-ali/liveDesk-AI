@@ -15,15 +15,16 @@ export default function ChatBubble({ message, isAI, timestamp }: ChatBubbleProps
   return (
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-3`}>
       <div
-        className={`max-w-xs md:max-w-md px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm
-          ${isAI
-            ? 'bg-blue-500 text-white rounded-bl-none'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-br-none'
-          }`}
+        className="max-w-xs md:max-w-md px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm"
+        style={{
+          backgroundColor: isAI ? '#e94560' : '#111438',
+          color: '#ffffff',
+          borderRadius: isAI ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
+        }}
       >
         <p>{message}</p>
         {mounted && timestamp && (
-          <span className={`text-[10px] mt-1 block opacity-60 ${isAI ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          <span className="text-[10px] mt-1 block" style={{ opacity: 0.6, color: isAI ? '#ffb3c0' : '#8892b0' }}>
             {timestamp}
           </span>
         )}

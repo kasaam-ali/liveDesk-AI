@@ -4,18 +4,20 @@ interface MicButtonProps {
   isListening: boolean;
   isDisabled?: boolean;
   isSupported: boolean;
-  onClick: () => void;
+  onStart: () => void;
+  onStop: () => void;
 }
 
 export default function MicButton({
   isListening,
   isDisabled = false,
   isSupported,
-  onClick,
+  onStart,
+  onStop,
 }: MicButtonProps) {
   if (!isSupported) {
     return (
-      <p className="text-sm text-amber-600 dark:text-amber-400 text-center max-w-xs">
+      <p className="text-sm text-center max-w-xs" style={{ color: '#e94560' }}>
         Speech recognition is not available in this browser. Please use Chrome or Edge.
       </p>
     );
@@ -23,19 +25,28 @@ export default function MicButton({
 
   return (
     <button
-      onClick={onClick}
+      onMouseDown={onStart}
+      onTouchStart={onStart}
+      onMouseUp={onStop}
+      onMouseLeave={onStop}
+      onTouchEnd={onStop}
       disabled={isDisabled}
       className={`
         w-20 h-20 rounded-full text-white text-3xl shadow-lg transition-all duration-300
-        focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800
-        disabled:opacity-50 disabled:cursor-not-allowed
+        focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed
+        select-none active:scale-95
         ${isListening
-          ? 'bg-red-500 hover:bg-red-600 animate-pulse shadow-red-500/50'
-          : 'bg-blue-600 hover:bg-blue-700 hover:scale-105 shadow-blue-600/30'
+          ? 'animate-pulse shadow-lg'
+          : 'hover:scale-105'
         }
       `}
-      aria-label={isListening ? 'Stop listening' : 'Start listening'}
-      title={isListening ? 'Click to stop' : 'Hold to speak'}
+      style={{
+        backgroundColor: isListening ? '#e94560' : '#4a9eff',
+        boxShadow: isListening
+          ? '0 0 30px rgba(233, 69, 96, 0.5)'
+          : '0 4px 20px rgba(74, 158, 255, 0.3)'
+      }}
+      aria-label={isListening ? 'Release to stop' : 'Hold to speak'}
     >
       {isListening ? '⏹' : '🎤'}
     </button>

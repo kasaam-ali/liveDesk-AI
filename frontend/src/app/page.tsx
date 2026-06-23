@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import AvatarVideo from '@/components/Avatar/AvatarVideo';
+import Avatar3D from '@/components/Avatar3D/Avatar3D';
 import ChatBox from '@/components/Chat/ChatBox';
 import type { Message } from '@/components/Chat/ChatBox';
 import MicButton from '@/components/MicButton';
@@ -10,6 +10,7 @@ import HandoffButton from '@/components/HandoffButton';
 import Header from '@/components/Layout/Header';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { sendChatMessage, submitVisitorForm } from '@/utils/api';
+import { extractFormData } from '@/lib/voice-forms';
 import type { AvatarState, VisitorData } from '@/types';
 
 let messageCounter = 0;
@@ -31,6 +32,8 @@ export default function Home() {
   const [sessionId] = useState(() => `session-${Date.now()}`);
   const [isProcessing, setIsProcessing] = useState(false);
   const [handoffRequested, setHandoffRequested] = useState(false);
+  const [autoFilledField, setAutoFilledField] = useState<string | undefined>();
+  const [interimText, setInterimText] = useState('');
 
   const addMessage = useCallback((text: string, sender: 'user' | 'ai') => {
     setMessages((prev) => [
@@ -44,19 +47,51 @@ export default function Home() {
     ]);
   }, []);
 
+  const formDataRef = useRef<{ name?: string; phone?: string; course?: string }>({});
+
+  const appendLog = (entry: { visitorName?: string; phone?: string; course?: string; handoffRequested?: boolean }) => {
+    try {
+      const raw = localStorage.getItem('livedesk_logs');
+      const logs = raw ? JSON.parse(raw) : [];
+      logs.push({ ...entry, timestamp: new Date().toISOString(), handoffRequested: !!entry.handoffRequested });
+      localStorage.setItem('livedesk_logs', JSON.stringify(logs.slice(-200)));
+    } catch {}
+  };
+
   const {
     isListening,
     isSupported,
+    interimText: sttInterim,
     start: startListening,
     stop: stopListening,
     speak,
   } = useSpeechRecognition({
+    onInterim: (text) => {
+      setInterimText(text);
+      const parsed = extractFormData(text);
+      if (parsed.name && !formDataRef.current.name) {
+        formDataRef.current.name = parsed.name;
+        setAutoFilledField('name');
+        setTimeout(() => setAutoFilledField(undefined), 2000);
+      }
+      if (parsed.phone && !formDataRef.current.phone) {
+        formDataRef.current.phone = parsed.phone;
+        setAutoFilledField('phone');
+        setTimeout(() => setAutoFilledField(undefined), 2000);
+      }
+      if (parsed.course && !formDataRef.current.course) {
+        formDataRef.current.course = parsed.course;
+        setAutoFilledField('course');
+        setTimeout(() => setAutoFilledField(undefined), 2000);
+      }
+    },
     onResult: (transcript) => {
+      setInterimText('');
       addMessage(transcript, 'user');
       setIsProcessing(true);
       setAvatarState('thinking');
 
-      sendChatMessage(transcript, sessionId)
+      sendChatMessage(transcript)
         .then((response) => {
           setAvatarState('speaking');
           addMessage(response.text, 'ai');
@@ -95,17 +130,18 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [isClient, isSupported, startListening]);
 
-  const handleMicClick = () => {
-    if (isListening) {
-      stopListening();
-      setAvatarState('idle');
-    } else {
-      setAvatarState('listening');
-      startListening();
-    }
+  const handleMicStart = () => {
+    setAvatarState('listening');
+    startListening();
+  };
+
+  const handleMicStop = () => {
+    stopListening();
+    setAvatarState('idle');
   };
 
   const handleFormSubmit = async (data: VisitorData) => {
+    appendLog({ visitorName: data.name, phone: data.phone, course: data.course });
     try {
       await submitVisitorForm(data);
       addMessage(
@@ -120,6 +156,7 @@ export default function Home() {
 
   const handleHandoff = () => {
     setHandoffRequested(true);
+    appendLog({ handoffRequested: true });
     addMessage('Connecting you to a human agent. Please wait a moment...', 'ai');
     setTimeout(() => {
       addMessage('Hello! I am a human agent. How can I assist you today?', 'ai');
@@ -127,7 +164,7 @@ export default function Home() {
   };
 
   if (!isClient) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-gray-950" />;
+    return <div style={{ minHeight: '100vh', backgroundColor: '#0a0e27' }} />;
   }
 
   return (
@@ -135,22 +172,28 @@ export default function Home() {
       <Header />
 
       <div className="w-full space-y-6">
-        <AvatarVideo state={avatarState} />
+        <Avatar3D state={avatarState} />
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 h-80 flex flex-col">
+        <div style={{ backgroundColor: '#141738', borderColor: '#1e2248' }} className="rounded-2xl shadow-sm border h-80 flex flex-col">
           <ChatBox messages={messages} />
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-2">
           <MicButton
             isListening={isListening}
             isDisabled={isProcessing}
             isSupported={isSupported}
-            onClick={handleMicClick}
+            onStart={handleMicStart}
+            onStop={handleMicStop}
           />
+          {interimText && (
+            <p className="text-sm animate-pulse text-center max-w-sm" style={{ color: '#8892b0' }}>
+              {interimText}
+            </p>
+          )}
         </div>
 
-        <VisitorForm onFormSubmit={handleFormSubmit} />
+        <VisitorForm onFormSubmit={handleFormSubmit} autoFilledField={autoFilledField} />
 
         {!handoffRequested && (
           <HandoffButton onHandoff={handleHandoff} disabled={isProcessing} />

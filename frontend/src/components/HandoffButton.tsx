@@ -11,9 +11,14 @@ export default function HandoffButton({ onHandoff, disabled = false }: HandoffBu
       onClick={onHandoff}
       disabled={disabled}
       className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200
-        border-2 border-amber-400 text-amber-600 dark:text-amber-400
-        hover:bg-amber-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed
-        focus:outline-none focus:ring-4 focus:ring-amber-200 dark:focus:ring-amber-800"
+        disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
+      style={{
+        border: '2px solid #e94560',
+        color: '#e94560',
+        backgroundColor: 'transparent',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e94560'; e.currentTarget.style.color = '#ffffff'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#e94560'; }}
     >
       📞 Contact Human Agent
     </button>
