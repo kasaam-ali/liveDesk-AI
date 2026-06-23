@@ -1,4 +1,7 @@
 const AI_ENGINE_URL = process.env.NEXT_PUBLIC_AI_ENGINE_URL || 'http://localhost:3001';
+const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = process.env.NEXT_PUBLIC_GROQ_MODEL || 'llama3-8b-8192';
 
 const hardcodedResponses: Record<string, string> = {
   assalam: 'Wa Alaikum Assalam! I am LiveDesk AI, your virtual receptionist. How can I help you today?',
@@ -29,6 +32,12 @@ const hardcodedResponses: Record<string, string> = {
   default: 'I did not quite understand that. Could you please rephrase? Or I can connect you to a human agent if you prefer.',
 };
 
+const groqSystemPrompt = `You are LiveDesk AI, a friendly receptionist at Saylani Mass IT Training in Karachi, Pakistan.
+Answer in English or Roman Urdu. Be warm, concise, and helpful. Keep responses under 3 sentences.
+Available courses: Web Development (PKR 5,000/month, 6 months), Python (PKR 4,000/month, 4 months),
+Graphic Design (PKR 4,000/month, 3 months), AI/ML (PKR 6,000/month, 8 months), Data Science (PKR 5,000/month, 6 months).
+Classes: Mon-Fri 9AM-6PM, Weekend Sat 10AM-2PM. Contact: +92-21-9924567.`;
+
 function getHardcodedResponse(input: string): string | null {
   const lower = input.toLowerCase();
   for (const [keyword, response] of Object.entries(hardcodedResponses)) {
@@ -39,13 +48,49 @@ function getHardcodedResponse(input: string): string | null {
   return null;
 }
 
+async function callGroqAPI(message: string): Promise<string | null> {
+  if (!GROQ_API_KEY) return null;
+
+  try {
+    const response = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: 'system', content: groqSystemPrompt },
+          { role: 'user', content: message },
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) throw new Error(`Groq API error: ${response.status}`);
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch {
+    return null;
+  }
+}
+
 export async function sendChatMessage(
   message: string,
   sessionId: string
 ): Promise<{ text: string; metadata?: Record<string, string> }> {
   const hardcoded = getHardcodedResponse(message);
   if (hardcoded) {
-    return { text: hardcoded };
+    return { text: hardcoded, metadata: { source: 'hardcoded' } };
+  }
+
+  const groqResponse = await callGroqAPI(message);
+  if (groqResponse) {
+    return { text: groqResponse, metadata: { source: 'groq' } };
   }
 
   try {
@@ -56,9 +101,7 @@ export async function sendChatMessage(
       signal: AbortSignal.timeout(5000),
     });
 
-    if (!response.ok) {
-      throw new Error(`Chat API error: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Chat API error: ${response.statusText}`);
 
     return response.json();
   } catch {
@@ -82,9 +125,7 @@ export async function submitVisitorForm(formData: {
       signal: AbortSignal.timeout(5000),
     });
 
-    if (!response.ok) {
-      throw new Error(`Form submission error: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Form submission error: ${response.statusText}`);
 
     return response.json();
   } catch {
